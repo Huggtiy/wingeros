@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WingerOS</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:#f5f5f5;color:#111;min-height:100vh}
+.app{max-width:800px;margin:0 auto;background:#fff;min-height:100vh}
+
+/* HEADER */
+.app-header{background:#111;padding:14px 20px;display:flex;align-items:center;justify-content:space-between}
+.app-logo{font-size:18px;font-weight:700;color:#e8f000;letter-spacing:0.05em}
+.app-logo span{color:#666;font-weight:400}
+.app-meta{display:flex;gap:8px;align-items:center}
+.week-pill{background:#222;border:1px solid #333;border-radius:20px;padding:3px 12px;font-size:12px;font-weight:600;color:#aaa}
+.date-txt{font-size:12px;color:#666}
+
+/* NAV */
+.app-nav{display:flex;background:#111;border-bottom:1px solid #222;overflow-x:auto;scrollbar-width:none}
+.app-nav::-webkit-scrollbar{display:none}
+.nav-btn{flex-shrink:0;padding:12px 16px;background:none;border:none;border-bottom:2px solid transparent;color:#666;font-family:inherit;font-weight:600;font-size:12px;cursor:pointer;white-space:nowrap;letter-spacing:0.05em;text-transform:uppercase}
+.nav-btn:hover{color:#ccc}
+.nav-btn.active{color:#e8f000;border-bottom-color:#e8f000}
+
+/* BODY */
+.app-body{padding:16px}
+.sec{display:none}.sec.active{display:block}
+
+/* HERO */
+.hero{background:#f8f8f8;border:1px solid #e8e8e8;border-radius:12px;padding:18px;margin-bottom:14px}
+.hero-label{font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#999;margin-bottom:4px}
+.hero-title{font-size:22px;font-weight:700;color:#111;margin-bottom:6px;line-height:1.2}
+.hero-sub{font-size:13px;color:#666;line-height:1.6;margin-bottom:12px}
+.tag-row{display:flex;flex-wrap:wrap;gap:5px}
+.stag{display:inline-block;padding:3px 10px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase}
+.stag-gym{background:#e8f4ff;color:#1a6fb5;border:1px solid #bdd9f5}
+.stag-run{background:#e8fff3;color:#1a8040;border:1px solid #b3e8cc}
+.stag-rest{background:#f5f5f5;color:#888;border:1px solid #ddd}
+.stag-field{background:#fff8e8;color:#8a6000;border:1px solid #f5d87a}
+.stag-power{background:#fff0f0;color:#c0392b;border:1px solid #f5b5b5}
+
+/* SEC LABEL */
+.sec-label{font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#999;margin:16px 0 8px}
+
+/* EXERCISE CARDS */
+.ex-card{background:#fff;border:1px solid #e8e8e8;border-radius:10px;overflow:hidden;margin-bottom:7px;cursor:pointer;transition:border-color 0.15s}
+.ex-card:hover{border-color:#ccc}
+.ex-card.open{border-color:#1a6fb5}
+.ex-head{display:flex;align-items:center;padding:12px 14px;gap:10px}
+.ex-num{font-size:10px;font-weight:700;color:#ccc;width:16px;flex-shrink:0}
+.ex-name{flex:1;font-size:14px;font-weight:600;color:#111}
+.ex-sets{font-size:12px;font-weight:700;color:#1a6fb5;flex-shrink:0;white-space:nowrap}
+.ex-chev{font-size:10px;color:#ccc;flex-shrink:0;transition:transform 0.2s;margin-left:6px}
+.ex-card.open .ex-chev{transform:rotate(180deg)}
+.ex-body{display:none;padding:0 14px 13px;border-top:1px solid #f0f0f0}
+.ex-card.open .ex-body{display:block}
+.ex-how{font-size:13px;color:#555;line-height:1.7;padding-top:11px;margin-bottom:9px}
+.ex-tip{background:#fffbf0;border-left:3px solid #f5a623;border-radius:0 6px 6px 0;padding:8px 12px;font-size:12px;color:#8a6000;line-height:1.6}
+.ex-tip strong{display:block;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:2px;color:#f5a623}
+.updated-tag{display:inline-block;background:#e8fff3;color:#1a8040;border:1px solid #b3e8cc;border-radius:20px;padding:1px 8px;font-size:10px;font-weight:700;margin-left:6px;vertical-align:middle}
+
+/* WEEK VIEW */
+.week-item{background:#fff;border:1px solid #e8e8e8;border-radius:10px;margin-bottom:7px;overflow:hidden;cursor:pointer;transition:border-color 0.15s}
+.week-item:hover{border-color:#ccc}
+.week-item.today{border-color:#1a6fb5;border-width:2px}
+.week-item.expanded{border-color:#1a6fb5}
+.week-item.holiday{border-color:#f5a623;background:#fffbf0}
+.week-row-inner{display:flex;align-items:center;padding:12px 14px;gap:10px}
+.w-day{font-size:12px;font-weight:700;color:#888;width:30px;flex-shrink:0;text-transform:uppercase}
+.week-item.today .w-day{color:#1a6fb5}
+.week-item.expanded .w-day{color:#1a6fb5}
+.week-item.holiday .w-day{color:#f5a623}
+.w-date{font-size:11px;color:#bbb;width:36px;flex-shrink:0}
+.w-name{flex:1;font-size:13px;font-weight:600;color:#111}
+.week-item.holiday .w-name{color:#8a6000}
+.w-tags{display:flex;gap:3px;flex-wrap:wrap;justify-content:flex-end;flex-shrink:0}
+.w-chev{font-size:10px;color:#ccc;margin-left:5px;transition:transform 0.2s;flex-shrink:0}
+.week-item.expanded .w-chev{transform:rotate(180deg)}
+.week-detail{display:none;border-top:1px solid #f0f0f0;padding:13px 14px}
+.week-item.expanded .week-detail{display:block}
+.week-sub{font-size:13px;color:#666;line-height:1.6;margin-bottom:10px}
+.week-rest-note{background:#f8f8f8;border-radius:8px;padding:10px 12px;font-size:13px;color:#666;line-height:1.6}
+.week-holiday-note{background:#fffbf0;border-radius:8px;padding:12px 14px;font-size:13px;color:#8a6000;line-height:1.7}
+.week-holiday-note strong{display:block;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:6px;color:#f5a623}
+
+/* FOOD */
+.meal-group{margin-bottom:20px}
+.group-hdr{display:flex;align-items:center;gap:8px;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid #f0f0f0}
+.group-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.group-name{font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#888}
+.group-protein{font-size:11px;color:#bbb;margin-left:auto}
+.dot-bf{background:#e8a020}.dot-sn{background:#378ADD}.dot-lu{background:#3B6D11}.dot-tr{background:#7F77DD}.dot-di{background:#E24B4A}.dot-bd{background:#888780}
+.meal-card{background:#fff;border:1px solid #e8e8e8;border-radius:10px;padding:13px 14px;margin-bottom:7px;display:flex;align-items:flex-start;gap:10px}
+.meal-card.clickable{cursor:pointer;transition:border-color 0.15s}
+.meal-card.clickable:hover{border-color:#1a6fb5}
+.meal-left{flex:1;min-width:0}
+.meal-time{font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#bbb;margin-bottom:3px}
+.meal-name{font-size:14px;font-weight:600;color:#111;margin-bottom:4px}
+.meal-desc{font-size:12px;color:#888;line-height:1.5}
+.meal-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0}
+.pro-pill{padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;border:1px solid}
+.pill-bf{background:#fff8ec;color:#7a4800;border-color:#f5c97a}
+.pill-sn{background:#eef5ff;color:#0c3d7c;border-color:#7ab3f5}
+.pill-lu{background:#edfff5;color:#1a5c2e;border-color:#7ae8aa}
+.pill-tr{background:#f3eeff;color:#3c1a8a;border-color:#b3a3f5}
+.pill-di{background:#fff0f0;color:#7a1a1a;border-color:#f5a3a3}
+.pill-bd{background:#f5f5f3;color:#444;border-color:#d3d1c7}
+.rec-arrow{font-size:11px;color:#bbb}
+.rec-back{display:flex;align-items:center;gap:5px;background:none;border:none;cursor:pointer;font-size:13px;color:#1a6fb5;padding:0;margin-bottom:14px;font-family:inherit;font-weight:600}
+.rec-hdr{background:#f8f8f8;border-radius:10px;padding:16px;margin-bottom:12px}
+.rec-title{font-size:18px;font-weight:700;color:#111;margin-bottom:5px}
+.rec-meta{font-size:12px;color:#888;line-height:1.6;margin-bottom:10px}
+.rec-stats{display:flex;gap:6px;flex-wrap:wrap}
+.rec-stat{padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;background:#fff;border:1px solid #e8e8e8;color:#666}
+.ing-list{background:#fff;border:1px solid #e8e8e8;border-radius:10px;overflow:hidden;margin-bottom:0}
+.ing-row{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #f5f5f5;gap:10px}
+.ing-row:last-child{border-bottom:none}
+.ing-name{font-size:13px;color:#111}
+.ing-amt{font-size:13px;font-weight:600;color:#666;white-space:nowrap}
+.step-list{display:flex;flex-direction:column;gap:7px}
+.step-card{background:#fff;border:1px solid #e8e8e8;border-radius:10px;padding:13px 14px;display:flex;gap:12px}
+.step-n{width:24px;height:24px;border-radius:50%;background:#1a6fb5;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.step-b{flex:1}
+.step-title{font-size:13px;font-weight:700;color:#111;margin-bottom:4px}
+.step-desc{font-size:13px;color:#666;line-height:1.7}
+.step-tip{margin-top:7px;background:#fffbf0;border-left:3px solid #f5a623;border-radius:0 6px 6px 0;padding:7px 11px;font-size:12px;color:#8a6000;line-height:1.6}
+.step-tip strong{display:block;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:2px;color:#f5a623}
+.food-main{display:block}.food-rec{display:none}
+
+/* SHOPPING */
+.shop-aisle{margin-bottom:18px}
+.aisle-hdr{display:flex;align-items:center;gap:8px;padding:9px 13px;border-radius:8px;margin-bottom:6px}
+.aisle-name{font-size:12px;font-weight:700;color:#111}
+.aisle-count{font-size:11px;color:#aaa;margin-left:auto}
+.shop-item{background:#fff;border:1px solid #e8e8e8;border-radius:10px;padding:11px 14px;margin-bottom:5px;display:flex;align-items:flex-start;gap:10px;cursor:pointer;transition:border-color 0.15s}
+.shop-item:hover{border-color:#ccc}
+.shop-check{width:20px;height:20px;border-radius:5px;border:1.5px solid #ddd;flex-shrink:0;display:flex;align-items:center;justify-content:center;margin-top:1px;transition:all 0.15s}
+.shop-item.checked .shop-check{background:#1a8040;border-color:#1a8040}
+.shop-item.checked .shop-check::after{content:'';display:block;width:10px;height:6px;border-left:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(-45deg) translate(1px,-1px)}
+.shop-item.checked .shop-iname{text-decoration:line-through;color:#bbb}
+.shop-item.checked .shop-iamt{color:#bbb}
+.shop-iinfo{flex:1}
+.shop-iname{font-size:13px;font-weight:600;color:#111;margin-bottom:2px}
+.shop-iamt{font-size:12px;color:#888}
+.shop-tags{display:flex;gap:3px;flex-wrap:wrap;flex-shrink:0;max-width:150px;justify-content:flex-end}
+.meal-tag{padding:2px 7px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap;border:1px solid}
+.mt-bf{background:#fff8ec;color:#7a4800;border-color:#f5c97a}
+.mt-lu{background:#edfff5;color:#1a5c2e;border-color:#7ae8aa}
+.mt-di{background:#fff0f0;color:#7a1a1a;border-color:#f5a3a3}
+.mt-tr{background:#f3eeff;color:#3c1a8a;border-color:#b3a3f5}
+.mt-bd{background:#f5f5f3;color:#444;border-color:#d3d1c7}
+.choice-box{background:#fffbf0;border:1px solid #f5d87a;border-radius:10px;padding:13px 14px;margin-bottom:14px}
+.choice-title{font-size:12px;font-weight:700;color:#8a6000;margin-bottom:8px}
+.choice-opts{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.choice-btn{padding:10px 11px;border-radius:8px;border:1px solid #f5d87a;background:#fff;cursor:pointer;text-align:left;font-family:inherit;transition:all 0.15s}
+.choice-btn.selected{border-color:#1a6fb5;background:#eef5ff}
+.choice-btn-name{font-size:12px;font-weight:700;color:#111}
+.choice-btn-sub{font-size:11px;color:#888;margin-top:2px}
+.shop-progress{background:#f8f8f8;border-radius:10px;padding:13px 14px;margin-bottom:14px;display:flex;align-items:center;gap:12px}
+.shop-prog-info{flex:1}
+.shop-prog-label{font-size:12px;font-weight:600;color:#111;margin-bottom:5px}
+.shop-prog-bar{height:5px;background:#e8e8e8;border-radius:3px;overflow:hidden}
+.shop-prog-fill{height:100%;background:#1a8040;border-radius:3px;transition:width 0.3s}
+.shop-prog-count{font-size:13px;font-weight:700;color:#1a8040;white-space:nowrap}
+.clear-btn{background:none;border:1px solid #ddd;border-radius:7px;padding:6px 11px;font-size:11px;color:#888;cursor:pointer;font-family:inherit;white-space:nowrap;font-weight:600}
+
+/* TARGETS */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:14px}
+.stat-box{background:#f8f8f8;border-radius:10px;padding:13px}
+.stat-val{font-size:22px;font-weight:700;color:#111;line-height:1;margin-bottom:3px}
+.stat-lbl{font-size:11px;font-weight:600;color:#888}
+.stat-sub{font-size:10px;color:#bbb;margin-top:2px}
+.prog-wrap{margin-bottom:10px}
+.prog-lbl{display:flex;justify-content:space-between;font-size:12px;color:#888;margin-bottom:5px;font-weight:600}
+.prog-lbl span:last-child{color:#1a6fb5}
+.prog-bar{height:5px;background:#f0f0f0;border-radius:3px;overflow:hidden}
+.prog-fill{height:100%;background:#1a6fb5;border-radius:3px}
+.prog-fill-g{background:#1a8040}
+.rule-item{background:#fff;border:1px solid #e8e8e8;border-radius:10px;padding:11px 13px;display:flex;gap:10px;align-items:flex-start;margin-bottom:7px}
+.rule-num{font-size:15px;font-weight:700;color:#c0392b;line-height:1;flex-shrink:0;width:16px}
+.rule-txt{font-size:13px;color:#666;line-height:1.6}
+.rule-txt strong{color:#111;font-weight:700}
+
+/* LOG */
+.log-card{background:#fff;border:1px solid #e8e8e8;border-radius:10px;padding:13px 14px;margin-bottom:7px}
+.log-date{font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#bbb;margin-bottom:7px}
+.log-lifts{display:flex;flex-wrap:wrap;gap:6px}
+.log-lift{background:#f5f5f5;border-radius:6px;padding:4px 11px;font-size:12px;color:#555}
+.log-lift strong{color:#111;font-weight:700}
+.log-lift.up strong span{color:#1a8040}
+.log-lift.warn{background:#fff0f0}
+.log-lift.warn strong{color:#c0392b}
+.badge-updated{display:inline-block;background:#e8fff3;color:#1a8040;border:1px solid #b3e8cc;border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700;margin-left:6px;vertical-align:middle}
+.badge-holiday{display:inline-block;background:#fffbf0;color:#8a6000;border:1px solid #f5d87a;border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700;margin-left:6px;vertical-align:middle}
+.info-box{background:#eef5ff;border-radius:10px;padding:13px 14px;font-size:13px;color:#1a4f8a;line-height:1.6;margin-bottom:12px;border:1px solid #bdd9f5}
+.warn-box{background:#fffbf0;border-radius:10px;padding:13px 14px;font-size:13px;color:#8a6000;line-height:1.6;margin-bottom:12px;border:1px solid #f5d87a}
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="app-header">
+  <div class="app-logo">Winger<span>OS</span></div>
+  <div class="app-meta">
+    <div class="week-pill" id="wkBadge">Week 1 of 14</div>
+    <div class="date-txt" id="dateTxt"></div>
+  </div>
+</div>
+
+<div class="app-nav">
+  <button class="nav-btn active" onclick="showSec('today',this)">Today</button>
+  <button class="nav-btn" onclick="showSec('week',this)">This week</button>
+  <button class="nav-btn" onclick="showSec('food',this)">Food</button>
+  <button class="nav-btn" onclick="showSec('shop',this)">Shopping</button>
+  <button class="nav-btn" onclick="showSec('targets',this)">Targets</button>
+  <button class="nav-btn" onclick="showSec('rules',this)">Rules</button>
+</div>
+
+<div class="app-body">
+
+<div id="today" class="sec active"></div>
+
+<div id="week" class="sec">
+  <div class="sec-label">This week — tap a day to expand</div>
+  <div id="weekGrid"></div>
+</div>
+
+<div id="food" class="sec">
+  <div class="food-main" id="foodMain">
+    <div class="hero">
+      <div class="hero-label">Daily food plan</div>
+      <div class="hero-title">What you eat today</div>
+      <div class="hero-sub">No beans, no cauliflower, no garlic, no peanut butter. ~170g protein daily. Tap breakfast, lunch or dinner for the full recipe.</div>
+    </div>
+    <div class="meal-group">
+      <div class="group-hdr"><div class="group-dot dot-bf"></div><span class="group-name">Breakfast</span><span class="group-protein">~40g protein</span></div>
+      <div class="meal-card clickable" onclick="openRec('breakfast')">
+        <div class="meal-left"><div class="meal-time">7am — half the tupperware</div><div class="meal-name">Overnight oat &amp; yogurt tupperware</div><div class="meal-desc">100g oats in Greek yogurt with whey, 50g granola, 80g blueberries, honey. Half at 7am, half at 11am.</div></div>
+        <div class="meal-right"><span class="pro-pill pill-bf">~40g</span><span class="rec-arrow">Recipe ›</span></div>
+      </div>
+    </div>
+    <div class="meal-group">
+      <div class="group-hdr"><div class="group-dot dot-sn"></div><span class="group-name">Mid-morning</span><span class="group-protein">~20g protein</span></div>
+      <div class="meal-card"><div class="meal-left"><div class="meal-time">11am</div><div class="meal-name">Second half of the tupperware</div><div class="meal-desc">Already in your bag. No prep needed.</div></div><div class="meal-right"><span class="pro-pill pill-sn">~20g</span></div></div>
+    </div>
+    <div class="meal-group">
+      <div class="group-hdr"><div class="group-dot dot-lu"></div><span class="group-name">Lunch</span><span class="group-protein">~40g protein</span></div>
+      <div class="meal-card clickable" onclick="openRec('chilli')">
+        <div class="meal-left"><div class="meal-time">Midday — from batch cook</div><div class="meal-name">Beef mince chilli + white rice</div><div class="meal-desc">Pre-portioned from Sunday. Reheats in 2 minutes.</div></div>
+        <div class="meal-right"><span class="pro-pill pill-lu">~40g</span><span class="rec-arrow">Recipe ›</span></div>
+      </div>
+    </div>
+    <div class="meal-group">
+      <div class="group-hdr"><div class="group-dot dot-tr"></div><span class="group-name">Training fuel</span><span class="group-protein">~33g protein</span></div>
+      <div class="meal-card"><div class="meal-left"><div class="meal-time">60–90 min before</div><div class="meal-name">Banana + rice cakes with honey</div><div class="meal-desc">Light carbs — not a full meal.</div></div><div class="meal-right"><span class="pro-pill pill-tr">~3g</span></div></div>
+      <div class="meal-card"><div class="meal-left"><div class="meal-time">Within 30 min after</div><div class="meal-name">Whey shake + banana</div><div class="meal-desc">Get protein in fast after training.</div></div><div class="meal-right"><span class="pro-pill pill-tr">~30g</span></div></div>
+    </div>
+    <div class="meal-group">
+      <div class="group-hdr"><div class="group-dot dot-di"></div><span class="group-name">Dinner</span><span class="group-protein">~45g each</span></div>
+      <div class="meal-card clickable" onclick="openRec('salmon')"><div class="meal-left"><div class="meal-time">Option 1 — twice a week minimum</div><div class="meal-name">Pan-fried salmon + sweet potato + roasted veg</div><div class="meal-desc">Omega-3 for recovery. 20 minutes.</div></div><div class="meal-right"><span class="pro-pill pill-di">~46g</span><span class="rec-arrow">Recipe ›</span></div></div>
+      <div class="meal-card clickable" onclick="openRec('mince')"><div class="meal-left"><div class="meal-time">Option 2</div><div class="meal-name">Lean beef mince bolognese + pasta</div><div class="meal-desc">No garlic, onion very soft. ~25 minutes.</div></div><div class="meal-right"><span class="pro-pill pill-di">~45g</span><span class="rec-arrow">Recipe ›</span></div></div>
+    </div>
+    <div class="meal-group">
+      <div class="group-hdr"><div class="group-dot dot-bd"></div><span class="group-name">Before bed</span><span class="group-protein">~20g protein</span></div>
+      <div class="meal-card"><div class="meal-left"><div class="meal-time">30–60 min before sleep</div><div class="meal-name">Cottage cheese or Greek yogurt</div><div class="meal-desc">200g. Slow protein for overnight repair.</div></div><div class="meal-right"><span class="pro-pill pill-bd">~20g</span></div></div>
+    </div>
+  </div>
+  <div class="food-rec" id="foodRec">
+    <button class="rec-back" onclick="closeRec()">← Back to meals</button>
+    <div id="recContent"></div>
+  </div>
+</div>
+
+<div id="shop" class="sec">
+  <div class="hero"><div class="hero-label">Weekly shopping list</div><div class="hero-title">Everything you need this week</div><div class="hero-sub">Sorted by supermarket aisle. Tap items to tick off. Cupboard staples not included.</div></div>
+  <div class="choice-box">
+    <div class="choice-title">Dinner this week — pick one so you only buy what you need</div>
+    <div class="choice-opts">
+      <button class="choice-btn selected" id="dinOpt1" onclick="selectDinner('salmon')"><div class="choice-btn-name">Salmon + sweet potato</div><div class="choice-btn-sub">Recommended — Omega-3</div></button>
+      <button class="choice-btn" id="dinOpt2" onclick="selectDinner('mince')"><div class="choice-btn-name">Mince bolognese + pasta</div><div class="choice-btn-sub">Cheaper option</div></button>
+    </div>
+  </div>
+  <div class="shop-progress">
+    <div class="shop-prog-info"><div class="shop-prog-label">Progress</div><div class="shop-prog-bar"><div class="shop-prog-fill" id="progFill" style="width:0%"></div></div></div>
+    <div class="shop-prog-count" id="progCount">0 / 0</div>
+    <button class="clear-btn" onclick="clearChecks()">Clear all</button>
+  </div>
+  <div id="shopList"></div>
+</div>
+
+<div id="targets" class="sec">
+  <div class="hero"><div class="hero-label">Pre-season targets</div><div class="hero-title">What we're building toward</div><div class="hero-sub">First week of August. 14 weeks from 30th April.</div></div>
+  <div class="stats-grid">
+    <div class="stat-box"><div class="stat-val">80kg</div><div class="stat-lbl">Bench press</div><div class="stat-sub">From 60kg</div></div>
+    <div class="stat-box"><div class="stat-val">170kg</div><div class="stat-lbl">Deadlift</div><div class="stat-sub">From 150kg</div></div>
+    <div class="stat-box"><div class="stat-val">145g</div><div class="stat-lbl">Protein daily</div><div class="stat-sub">Every day</div></div>
+    <div class="stat-box"><div class="stat-val">4:30</div><div class="stat-lbl">Bronco test</div><div class="stat-sub">Sub 5:00 is good</div></div>
+  </div>
+  <div class="sec-label">Weeks completed</div>
+  <div class="prog-wrap"><div class="prog-lbl"><span>Progress to pre-season</span><span id="wkProg">0 / 14</span></div><div class="prog-bar"><div class="prog-fill prog-fill-g" id="wkBar" style="width:0%"></div></div></div>
+
+  <div class="sec-label">Session log <span class="badge-updated">Updated 6 May</span></div>
+  <div class="log-card">
+    <div class="log-date">Tuesday 6 May — Upper strength (W1)</div>
+    <div class="log-lifts">
+      <div class="log-lift"><strong>Bench</strong> 5×5 @ 45kg ✓</div>
+      <div class="log-lift"><strong>Lat pulldown</strong> 4×6 @ 55kg ✓</div>
+      <div class="log-lift"><strong>DB shoulder press</strong> 4×6 @ 12.5kg ✓</div>
+      <div class="log-lift warn"><strong>Single-arm row</strong> 20kg — 9/10, drop to 17.5kg</div>
+      <div class="log-lift"><strong>Ski erg</strong> 3×45sec — 7/10 ✓</div>
+      <div class="log-lift"><strong>Farmer's carry</strong> 3×30m @ 24kg ✓</div>
+    </div>
+  </div>
+  <div class="log-card">
+    <div class="log-date">Wednesday 13 May — Upper strength (W2) — next session</div>
+    <div class="log-lifts">
+      <div class="log-lift up"><strong>Bench <span>↑</span></strong> 5×5 @ 47.5kg — 3min rest</div>
+      <div class="log-lift"><strong>Lat pulldown</strong> 4×6 @ 55–60kg — 90sec rest</div>
+      <div class="log-lift"><strong>DB shoulder press</strong> 4×6 @ 12.5kg — 90sec rest</div>
+      <div class="log-lift up"><strong>Single-arm row <span>↓</span></strong> 4×8 @ 17.5kg — strict form</div>
+      <div class="log-lift"><strong>Ski erg</strong> 3×45sec — 90sec rest</div>
+      <div class="log-lift"><strong>Farmer's carry</strong> 3×30m @ 24kg — 2min rest</div>
+    </div>
+  </div>
+
+  <div class="sec-label">Shoulder press progression</div>
+  <div class="rule-item"><div class="rule-num">W1</div><div class="rule-txt"><strong>12.5kg</strong> — current weight (slightly above planned 12kg). <span class="updated-tag">Updated</span></div></div>
+  <div class="rule-item"><div class="rule-num">W3</div><div class="rule-txt"><strong>14kg</strong> — move up when all sets feel 6–7/10, not 8+.</div></div>
+  <div class="rule-item"><div class="rule-num">W5</div><div class="rule-txt"><strong>16kg</strong> — 2–3 weeks at each weight.</div></div>
+  <div class="rule-item"><div class="rule-num">W8</div><div class="rule-txt"><strong>18kg</strong> — pre-season target.</div></div>
+
+  <div class="sec-label">Holiday adjustment <span class="badge-holiday">Wed 20 – Sun 24 May</span></div>
+  <div class="warn-box">Lads trip 20–24 May. Bad sleep and late nights expected. No training during this period — sessions on poor sleep don't recover properly and increase injury risk. Enjoy the trip.<br><br><strong>Back on Monday 26 May:</strong> first session back is at reduced intensity — ~10% lighter on all lifts. Deadlift at 95kg instead of 105kg. Upper weights normal from Wednesday 28 May once sleep has recovered.</div>
+</div>
+
+<div id="rules" class="sec">
+  <div class="hero"><div class="hero-label">Non-negotiables</div><div class="hero-title">The rules that don't move</div><div class="hero-sub">Every week, regardless of how you feel or how busy work is.</div></div>
+  <div class="rule-item"><div class="rule-num">1</div><div class="rule-txt"><strong>8 hours sleep minimum.</strong> Below this, everything else does less for you.</div></div>
+  <div class="rule-item"><div class="rule-num">2</div><div class="rule-txt"><strong>3L water daily, 4L+ on training days.</strong> 2% dehydration cuts sprint performance 5–10%.</div></div>
+  <div class="rule-item"><div class="rule-num">3</div><div class="rule-txt"><strong>145g protein every day.</strong> Including rest days.</div></div>
+  <div class="rule-item"><div class="rule-num">4</div><div class="rule-txt"><strong>Warm up every session.</strong> 10 minutes minimum. Cold sprints = hamstring tears.</div></div>
+  <div class="rule-item"><div class="rule-num">5</div><div class="rule-txt"><strong>One full rest day a week.</strong> Sunday. Recovery is when adaptation happens.</div></div>
+  <div class="rule-item"><div class="rule-num">6</div><div class="rule-txt"><strong>No alcohol weeks 1–10.</strong> Blunts protein synthesis 24h and wrecks REM sleep.</div></div>
+  <div class="rule-item"><div class="rule-num">7</div><div class="rule-txt"><strong>Never grind reps.</strong> Leave 1–2 in the tank on every main lift.</div></div>
+  <div class="rule-item"><div class="rule-num">8</div><div class="rule-txt"><strong>Don't double up missed sessions.</strong> Pick up where the plan says.</div></div>
+</div>
+
+</div>
+</div>
+
+<script>
+const START=new Date('2025-04-30');
+const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+// Holiday dates
+const HOLIDAY_START=new Date('2025-05-20');
+const HOLIDAY_END=new Date('2025-05-24');
+
+function isHolidayWeek(date){
+  const d=new Date(date);
+  // Check if any day this week falls in holiday
+  for(let i=0;i<7;i++){
+    const check=new Date(d);
+    check.setDate(d.getDate()+i);
+    if(check>=HOLIDAY_START&&check<=HOLIDAY_END) return true;
+  }
+  return false;
+}
+
+function isHolidayDate(date){
+  const d=new Date(date);
+  d.setHours(0,0,0,0);
+  const hs=new Date(HOLIDAY_START);hs.setHours(0,0,0,0);
+  const he=new Date(HOLIDAY_END);he.setHours(0,0,0,0);
+  return d>=hs&&d<=he;
+}
+
+const SESSIONS={
+  0:{name:'Full rest',sub:'No gym, no running. Recovery is when adaptation happens.',tags:['rest'],exercises:[],isRest:true},
+  1:{name:'Lower strength + speed',sub:'Trap-bar deadlift is your headline lift. Explosive up, controlled down.',tags:['gym'],exercises:[
+    {name:'Trap-bar deadlift',sets:'4 × 5 @ ~105kg',how:'Step inside the hex bar, feet hip-width apart. Push hips back and grab the handles. Big breath in, brace your core hard. Drive through the floor — think "push the floor away." Stand fully, hips and shoulders rise together. Lower under control.',tip:'Never round your lower back. If it curves as you pull, the weight is too heavy. Film yourself from the side once — you\'ll see things you can\'t feel.'},
+    {name:'Bulgarian split squat',sets:'3 × 8 each leg',how:'Rear foot on a bench, front foot stepped out. Lower back knee toward the floor — 3 seconds down. Drive back up through your front heel. Front shin stays relatively vertical.',tip:'This will feel awkward for 2–3 weeks. Stick with it — single-leg strength translates directly to acceleration and cutting.'},
+    {name:'Nordic hamstring curl',sets:'3 × 5',how:'Kneel with ankles secured. Lower yourself forward as slowly as you can — your hamstrings are the brakes. Use hands to catch yourself at the bottom. Pull back up.',tip:'Wingers tear hamstrings. This prevents it. Do not skip it. Ever.'},
+    {name:'Single-leg hip thrust',sets:'3 × 10 each leg',how:'Upper back on bench, one foot flat, other leg extended. Drive hips up squeezing the working glute. Hold 2 seconds at top. Lower slowly.',tip:'Glute exercise, not lower back. If you feel it in your lower back, your hips aren\'t going high enough.'},
+    {name:'Single-leg calf raise',sets:'3 × 12',how:'Stand on edge of a step, one foot. Rise onto toes, lower slowly — 3 full seconds down.',tip:'Most people rush the lowering phase. That\'s where the gains are.'},
+    {name:'Pallof press',sets:'3 × 10 each side',how:'Set a cable or band at chest height. Stand side-on, hold the handle at your chest with both hands. Press straight out in front of you, hold 2 seconds, bring it back.',tip:'Keep hips and shoulders square throughout. If you\'re rotating, the weight is too heavy.'},
+  ]},
+  2:{name:'Skills + conditioning',sub:'Field session. Aerobic base work and tackle technique. This builds the engine.',tags:['field','run'],exercises:[
+    {name:'Warm-up jog',sets:'10 min',how:'Easy jog, dynamic stretches. Build-up runs over 30m at 60%, 70%, 80% effort.',tip:'Cold sprints = pulled hamstrings. 10 minutes every time.'},
+    {name:'Aerobic intervals',sets:'6 × 4 min',how:'Run at a pace where you can speak in short sentences. 90 seconds walk between each.',tip:'Not a sprint, not a jog. "Comfortably uncomfortable."'},
+    {name:'Tackle technique drill',sets:'15–20 min',how:'Low body position, one foot forward, head up. Practice the shape without a partner first. Then walking pace bag work (or sofa/mattress stood upright), then jogging.',tip:'Low tackle height every time. Get the shape right slowly before adding speed.'},
+    {name:'Positioning walk-through',sets:'10 min',how:'Walk your defensive and attacking lines. Practise depth adjustment when the ball is on the far side.',tip:'The best wingers are in the right place before the ball gets there.'},
+  ]},
+  3:{name:'Upper strength + contact',sub:'Bench press is the headline. This week: 47.5kg. Lat pulldown: 55–60kg.',tags:['gym'],exercises:[
+    {name:'Bench press',sets:'5 × 5 @ 47.5kg — 3 min rest',how:'Lie on bench, feet flat. Grip just wider than shoulder width. Lower bar to lower chest. Pause 1 second on chest. Push straight up. Don\'t bounce. Shoulder blades squeezed together throughout.',tip:'3 minutes rest between sets — you\'ll feel the difference on sets 4 and 5 at 47.5kg compared to rushing it at 2 minutes.'},
+    {name:'Lat pulldown',sets:'4 × 6 @ 55–60kg — 90 sec rest',how:'Sit at the machine, knees under the pad, wide overhand grip. Lean back slightly — 10–15 degrees only. Pull bar to upper chest. Think shoulder blades together and down. Hold 1 second. Rise slowly — 3 seconds up.',tip:'Don\'t swing your torso to help the bar down. Body stays still, only arms and shoulder blades move. If you\'re rocking, the weight is too heavy.'},
+    {name:'DB shoulder press',sets:'4 × 6 @ 12.5kg — 90 sec rest',how:'Stand with dumbbells at shoulder height, palms forward. Brace core hard. Press straight up. Lower slowly. No leg drive.',tip:'Stay at 12.5kg until it feels 6–7/10 across all sets. Don\'t move to 14kg until it\'s genuinely comfortable.'},
+    {name:'Single-arm dumbbell row',sets:'4 × 8 @ 17.5kg — 90 sec rest',how:'One knee and hand on bench. Back flat like a table. Pull dumbbell toward your hip — not your armpit. Lower slowly.',tip:'Dropped from 20kg — that was 9/10 which means form was likely breaking down. 17.5kg strict is more valuable than 20kg sloppy. Torso must stay completely still.'},
+    {name:'Ski erg',sets:'3 × 45 sec — 90 sec rest',how:'Hinge at the hip as you pull down, stand back up as handles rise. Drive with whole body not just arms.',tip:'Most common mistake: pulling with arms only. The hip hinge drives the movement.'},
+    {name:'Farmer\'s carry',sets:'3 × 30m @ 24kg — 2 min rest',how:'Pick up two 24kg dumbbells, stand tall, walk 30 metres without shoulders dropping or torso tilting.',tip:'Grip, traps, and core all working simultaneously. Go heavier when this feels below 6/10.'},
+  ]},
+  4:{name:'Active recovery',sub:'No gym, no running. This lets Friday\'s session be high quality.',tags:['rest'],exercises:[
+    {name:'20–30 min brisk walk',sets:'',how:'Fast walking pace outside. Keeps blood moving, reduces stiffness.',tip:'Movement helps recovery. Inactivity doesn\'t.'},
+    {name:'Upper back mobility',sets:'10 min',how:'Book opens: lie on your side, sweep top arm overhead. Hold 5 sec each side, 8 reps.',tip:'Upper back mobility directly affects tackle position.'},
+    {name:'Shoulder hang',sets:'3 × 30 sec',how:'Hang from a pull-up bar for 30 seconds. Let everything relax.',tip:'Especially important on a heavy gym week.'},
+  ]},
+  5:{name:'Speed + power + skills',sub:'The session that makes you a faster winger. Sprint quality is everything.',tags:['power','run','field'],exercises:[
+    {name:'Thorough warm-up',sets:'10 min',how:'Jog, dynamic stretches, then build-up runs over 30m at 60%, 70%, 80%, 90% effort, two at each pace.',tip:'Never skip the warm-up on this session.'},
+    {name:'Broad jumps',sets:'4 × 3',how:'Jump for maximum horizontal distance. Land soft — absorb through hips and knees. Stick the landing before resetting.',tip:'Builds the explosive first step that gets you away from defenders.'},
+    {name:'Tuck jumps',sets:'4 × 3',how:'Jump straight up and pull your knees to your chest at the top. Land softly. Full reset between every rep.',tip:'Bodyweight replacement for trap-bar jumps when no equipment is available. Same explosive hip drive.'},
+    {name:'40m sprints @ 90%',sets:'6 × 40m',how:'Not flat out — 90% effort. Full walk-back recovery between reps.',tip:'Sprinting tired teaches your body to sprint slowly. Full recovery every rep.'},
+    {name:'Skills under fatigue',sets:'15 min',how:'Hand-off practice, step drills, high ball work after the sprints.',tip:'Skills when fatigued is closer to match conditions.'},
+  ]},
+  6:{name:'Optional skills session',sub:'Extended skills if you have the time and energy. Drop this if life is busy.',tags:['field'],exercises:[
+    {name:'Free skills practice',sets:'45–60 min',how:'Work on whatever felt weakest this week. Low intensity, high skill focus.',tip:'This session is optional. A good Sunday rest is worth more than a tired Saturday session.'},
+  ]},
+};
+
+// Special session overrides for specific dates
+const DATE_OVERRIDES={
+  '2025-05-19':{
+    note:'Do this session before leaving for the lads trip tomorrow. Last session before the holiday.',
+    extraNote:true
+  },
+  '2025-05-26':{
+    name:'Lower strength — reduced intensity',
+    sub:'First session back from the lads trip. Reduced weights — your body is still recovering from disrupted sleep and late nights. Do not train at full intensity today.',
+    tags:['gym'],
+    overrideExercises:[
+      {name:'Trap-bar deadlift',sets:'4 × 5 @ 95kg (reduced)',how:'Same technique as always — brace hard, drive the floor away. 95kg instead of 105kg this week. Your nervous system is still recovering from poor sleep.',tip:'Coming back too heavy after disrupted sleep is how injuries happen. One lighter session protects the rest of the week.'},
+      {name:'Bulgarian split squat',sets:'3 × 8 each leg — lighter than normal',how:'Use lighter dumbbells than normal. Focus on movement quality.',tip:'Don\'t rush back to normal weights. Wednesday will be back to full intensity.'},
+      {name:'Nordic hamstring curl',sets:'3 × 5',how:'As normal. Lower slowly, hands catch at the bottom.',tip:'Always do these regardless of intensity level.'},
+      {name:'Single-leg hip thrust',sets:'3 × 10 each leg',how:'Bodyweight or light load only today.',tip:'Glute activation — keep it easy today.'},
+      {name:'Single-leg calf raise',sets:'3 × 12',how:'As normal. 3 seconds lowering.',tip:'No loading needed today — bodyweight is fine.'},
+    ]
+  }
+};
+
+function dateKey(date){
+  const d=new Date(date);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function buildExercises(exercises){
+  if(!exercises||!exercises.length)return '';
+  return exercises.map((ex,i)=>`<div class="ex-card" onclick="event.stopPropagation();this.classList.toggle('open')"><div class="ex-head"><div class="ex-num">0${i+1}</div><div class="ex-name">${ex.name}</div>${ex.sets?`<div class="ex-sets">${ex.sets}</div>`:''}<div class="ex-chev">▼</div></div><div class="ex-body"><div class="ex-how">${ex.how}</div>${ex.tip?`<div class="ex-tip"><strong>Beginner note</strong>${ex.tip}</div>`:''}</div></div>`).join('');
+}
+
+function getSessionForDate(date){
+  const key=dateKey(date);
+  const override=DATE_OVERRIDES[key];
+  if(override&&override.overrideExercises){
+    return {
+      name:override.name,
+      sub:override.sub,
+      tags:override.tags,
+      exercises:override.overrideExercises,
+      isRest:false
+    };
+  }
+  return SESSIONS[date.getDay()];
+}
+
+function renderToday(){
+  const now=new Date();
+  const isHol=isHolidayDate(now);
+  const key=dateKey(now);
+  const override=DATE_OVERRIDES[key];
+
+  if(isHol){
+    document.getElementById('today').innerHTML=`
+      <div class="hero">
+        <div class="hero-label">Today — ${DAYS[now.getDay()]} ${now.getDate()} ${MONTHS[now.getMonth()]}</div>
+        <div class="hero-title">Lads trip — rest day 🏖️</div>
+        <div class="hero-sub">No training today. Enjoy the trip.</div>
+        <div class="tag-row"><span class="stag stag-rest">rest</span></div>
+      </div>
+      <div class="warn-box">No sessions 20–24 May. Training on poor sleep with late nights doesn't recover properly and increases injury risk. Walk when you can, eat protein where possible, drink water. Back to training Monday 26th — first session back at reduced intensity.</div>`;
+    return;
+  }
+
+  const s=getSessionForDate(now);
+  let html=`<div class="hero"><div class="hero-label">Today — ${DAYS[now.getDay()]} ${now.getDate()} ${MONTHS[now.getMonth()]}</div><div class="hero-title">${s.name}</div><div class="hero-sub">${s.sub}</div><div class="tag-row">${s.tags.map(t=>`<span class="stag stag-${t}">${t}</span>`).join('')}</div></div>`;
+
+  if(override&&override.extraNote){
+    html+=`<div class="warn-box"><strong>Heads up:</strong> last session before the lads trip tomorrow (Wed 20–Sun 24 May). Make this a good one.</div>`;
+  }
+  if(key==='2025-05-26'){
+    html+=`<div class="warn-box"><strong>First session back.</strong> Weights reduced by ~10% today. Your body is still recovering from 5 days of disrupted sleep. Wednesday 28th is back to full intensity.</div>`;
+  }
+
+  if(s.isRest&&!s.exercises.length){
+    html+=`<div class="info-box">Today is your full rest day. No gym, no running. Walk if you want, eat your protein, sleep well. Recovery is when adaptation happens.</div>`;
+  } else {
+    const exList=s.exercises||[];
+    html+=`<div class="sec-label">Session — ${exList.length} exercises</div>${buildExercises(exList)}`;
+  }
+  document.getElementById('today').innerHTML=html;
+}
+
+function renderWeek(){
+  const now=new Date(),todayDow=now.getDay();
+  let html='';
+  for(let i=1;i<=7;i++){
+    const dow=i===7?0:i;
+    const offset=dow-todayDow;
+    const d=new Date(now);d.setDate(now.getDate()+offset);
+    const isToday=dow===todayDow;
+    const isHol=isHolidayDate(d);
+    const s=getSessionForDate(d);
+    const isExp=expandedDay===dow;
+    const key=dateKey(d);
+    const override=DATE_OVERRIDES[key];
+
+    let detail='';
+    if(isHol){
+      detail=`<div class="week-holiday-note"><strong>Lads trip — no training</strong>No sessions 20–24 May. Enjoy the trip. Back to training Monday 26th at reduced intensity.</div>`;
+    } else if(s.isRest&&!s.exercises.length){
+      detail=`<div class="week-rest-note">Rest day. No gym, no running. Walk if you want — it helps recovery. Sleep well and hit your protein target.</div>`;
+    } else {
+      const exList=s.exercises||[];
+      let noteHtml='';
+      if(override&&override.extraNote) noteHtml=`<div class="warn-box" style="margin-bottom:10px"><strong>Last session before the lads trip.</strong> Make it count.</div>`;
+      if(key==='2025-05-26') noteHtml=`<div class="warn-box" style="margin-bottom:10px"><strong>First session back.</strong> Reduced intensity — 10% lighter on all lifts.</div>`;
+      detail=`${noteHtml}<div class="week-sub">${s.sub}</div>${buildExercises(exList)}`;
+    }
+
+    html+=`<div class="week-item${isToday?' today':''}${isExp?' expanded':''}${isHol?' holiday':''}" onclick="toggleWeekDay(${dow})">
+      <div class="week-row-inner">
+        <div class="w-day">${DAYS[dow]}</div>
+        <div class="w-date">${d.getDate()} ${MONTHS[d.getMonth()]}</div>
+        <div class="w-name">${isHol?'Lads trip — no training':s.name}</div>
+        <div class="w-tags">${isHol?'<span class="stag stag-rest">holiday</span>':s.tags.map(t=>`<span class="stag stag-${t}">${t}</span>`).join('')}</div>
+        <div class="w-chev">▼</div>
+      </div>
+      <div class="week-detail">${detail}</div>
+    </div>`;
+  }
+  document.getElementById('weekGrid').innerHTML=html;
+}
+
+let expandedDay=null;
+function toggleWeekDay(dow){expandedDay=expandedDay===dow?null:dow;renderWeek();}
+
+const RECIPES={
+  breakfast:{title:'Overnight oat & yogurt tupperware',meta:'Built the night before. Half at 7am, half at 11am. Zero morning prep.',stats:['~40g protein','~650 kcal','5 min prep','Serves 1'],ingredients:[{name:'Rolled oats',amt:'100g'},{name:'Greek yogurt, full fat',amt:'300g'},{name:'Whey protein powder',amt:'30g (1 scoop)'},{name:'Granola',amt:'50g'},{name:'Frozen blueberries',amt:'80g'},{name:'Honey',amt:'2 tbsp (~30g)'},{name:'Milk',amt:'60ml'}],steps:[{t:'Mix yogurt and whey',d:'Spoon 300g Greek yogurt into the bottom of your tupperware. Add 30g whey. Stir thoroughly until fully combined — no dry lumps.',tip:'Takes about 30 seconds of proper stirring to get it smooth.'},{t:'Add oats and milk',d:'Pour 100g rolled oats over the yogurt. Pour 60ml milk over the top. Gentle stir.',tip:'Reduce to 30ml if you prefer it thicker.'},{t:'Add toppings',d:'Scatter 50g granola, add 80g frozen blueberries, drizzle 2 tbsp honey.',tip:'Blueberries go in frozen — they defrost overnight and keep everything cooler in your bag.'},{t:'Seal and refrigerate overnight',d:'Lid on firmly. At least 6 hours.',tip:'The overnight soak is not optional. Dry oats eaten immediately would be unpleasant.'},{t:'Eat half at 7am, half at 11am',d:'Quick stir before eating. Eyeball the halfway point.',tip:'No need to measure precisely.'}]},
+  chilli:{title:'Beef mince chilli + white rice',meta:'Batch cook Sunday — 5 lunch portions. ~£7 total (~£1.40 per portion). No beans, no garlic.',stats:['~40g protein','~550 kcal','35–40 min','5 portions'],ingredients:[{name:'Lean beef mince, 5% fat',amt:'750g'},{name:'Tinned chopped tomatoes',amt:'2 × 400g tins'},{name:'Tomato purée',amt:'2 tbsp'},{name:'Red pepper',amt:'2 peppers (~300g)'},{name:'White rice (dry)',amt:'300g'}],steps:[{t:'Sweat onion and pepper',d:'Lowest heat, 15 minutes. Do not turn up the heat.',tip:'Removes all sharpness from the onion. If it starts to colour, heat is too high.'},{t:'Brown the mince',d:'Medium heat. Break apart with a wooden spoon. Cook 6–8 min until no pink.',tip:'If liquid pools, turn up heat slightly. You want browning, not boiling.'},{t:'Bloom spices',d:'Add spices, stir to coat. Add tomato purée, stir. Cook 2 minutes.',tip:'Cooking spices in fat before liquid makes them taste noticeably richer. Don\'t skip.'},{t:'Add tomatoes and stock',d:'Pour in tomatoes and 200ml stock. Gentle boil then reduce to low.',tip:'Small occasional bubbles — not a rolling boil.'},{t:'Simmer 20 minutes',d:'Uncovered, stirring every 5 minutes.',tip:'40 minutes tastes better than 20 if you have time.'},{t:'Cook the rice',d:'Rinse 300g rice, 600ml cold water. Boil, lid on, lowest heat 12 min. Off heat, lid on 5 more min.',tip:'Never lift the lid while cooking.'},{t:'Portion into 5 containers',d:'Equal portions. Cool before sealing.',tip:'Sealing hot food traps steam and makes it soggy.'}]},
+  salmon:{title:'Pan-fried salmon + sweet potato + roasted veg',meta:'~20 minutes. Salmon at least twice a week for Omega-3.',stats:['~46g protein','~580 kcal','~20 min','Serves 1'],ingredients:[{name:'Salmon fillet',amt:'200g'},{name:'Sweet potato',amt:'200g (1 medium)'},{name:'Courgette',amt:'150g'},{name:'Red pepper',amt:'100g (½ pepper)'},{name:'Lemon (optional)',amt:'½ lemon'}],steps:[{t:'Roast sweet potato and veg',d:'Oven 200°C. Cut sweet potato into 2cm cubes. Slice courgette and pepper. Tray, drizzle oil, season. Roast 20 min.',tip:'Cut pieces the same size so they cook evenly.'},{t:'Cook the salmon',d:'Medium-high heat, 1 tbsp oil. Pat salmon dry. Season. Skin-side down. 4 min, flip, 3 more min.',tip:'Cooked when flesh changes from translucent to opaque all the way through.'},{t:'Rest and serve',d:'1 minute rest off heat then plate. Squeeze lemon over.',tip:'The 1-minute rest keeps it juicy.'}]},
+  mince:{title:'Lean beef mince bolognese + pasta',meta:'~25 minutes. No garlic, onion cooked very soft.',stats:['~45g protein','~620 kcal','~25 min','Serves 1–2'],ingredients:[{name:'Lean beef mince, 5% fat',amt:'200g'},{name:'Pasta (penne or spaghetti)',amt:'100g dry'},{name:'Tinned chopped tomatoes',amt:'1 × 400g tin'},{name:'Tomato purée',amt:'1 tbsp'},{name:'Parmesan or cheddar (optional)',amt:'20g'}],steps:[{t:'Sweat the onion',d:'Lowest heat, 12–15 minutes. Soft and translucent.',tip:'Grate the onion instead of dicing — it melts completely into the sauce.'},{t:'Brown the mince',d:'Medium heat. Break apart. Cook 5–6 min.',tip:'If liquid pools, turn up heat.'},{t:'Add spices and tomatoes',d:'Spices, purée 1 min, tin tomatoes, simmer 15 min.',tip:'Add a splash of pasta water if sauce looks dry when combining.'},{t:'Cook the pasta',d:'Salted boiling water. Cook per packet. Taste 1 min before stated time.',tip:'Salt the water generously — only chance to season the pasta itself.'},{t:'Combine and serve',d:'Pasta into sauce. Pasta water if too thick.',tip:'Add pasta to sauce, not sauce to pasta.'}]},
+};
+
+const AISLES_SALMON=[
+  {name:'Fresh meat & fish',icon:'🐟',color:'#E6F1FB',items:[{name:'Salmon fillets',amt:'2 × 200g (for 2 dinners)',tags:['dinner']},{name:'Lean beef mince, 5% fat',amt:'750g (batch cook)',tags:['lunch']}]},
+  {name:'Dairy & eggs',icon:'🥛',color:'#EAF3DE',items:[{name:'Greek yogurt, full fat',amt:'2 × 500g tubs',tags:['breakfast','before bed']},{name:'Cottage cheese',amt:'1 × 300g tub',tags:['before bed']},{name:'Milk',amt:'1 × 2L',tags:['breakfast']},{name:'Whey protein powder',amt:'1 tub if needed',tags:['breakfast','post-training']}]},
+  {name:'Bakery & cereals',icon:'🌾',color:'#FAEEDA',items:[{name:'Rolled oats',amt:'500g bag',tags:['breakfast']},{name:'Granola',amt:'500g bag',tags:['breakfast']},{name:'Rice cakes',amt:'1 pack',tags:['pre-training']}]},
+  {name:'Fresh fruit & veg',icon:'🥦',color:'#EAF3DE',items:[{name:'Sweet potato',amt:'4 medium (~800g)',tags:['dinner']},{name:'Courgette',amt:'2 (~300g)',tags:['dinner']},{name:'Red peppers',amt:'4 peppers',tags:['lunch','dinner']},{name:'Bananas',amt:'1 bunch (7)',tags:['pre-training','post-training']},{name:'Lemon',amt:'1',tags:['dinner']}]},
+  {name:'Frozen',icon:'🧊',color:'#E6F1FB',items:[{name:'Frozen blueberries',amt:'500g bag',tags:['breakfast']}]},
+  {name:'Tins & jars',icon:'🥫',color:'#F1EFE8',items:[{name:'Tinned chopped tomatoes',amt:'2 × 400g tins',tags:['lunch']}]},
+  {name:'Rice, pasta & grains',icon:'🍚',color:'#FAEEDA',items:[{name:'White rice',amt:'1kg bag',tags:['lunch']}]},
+  {name:'Condiments & sweet',icon:'🍯',color:'#FAEEDA',items:[{name:'Honey',amt:'1 squeezy bottle',tags:['breakfast','pre-training']}]},
+  {name:'Supplements',icon:'💊',color:'#EEEDFE',items:[{name:'Creatine monohydrate',amt:'5g daily — buy if needed',tags:['supplement']},{name:'Vitamin D3',amt:'1000–2000 IU daily — buy if needed',tags:['supplement']}]},
+];
+const AISLES_MINCE=[
+  {name:'Fresh meat & fish',icon:'🐟',color:'#E6F1FB',items:[{name:'Lean beef mince, 5% fat',amt:'950g total (750g batch + 200g bolognese)',tags:['lunch','dinner']}]},
+  {name:'Dairy & eggs',icon:'🥛',color:'#EAF3DE',items:[{name:'Greek yogurt, full fat',amt:'2 × 500g tubs',tags:['breakfast','before bed']},{name:'Cottage cheese',amt:'1 × 300g tub',tags:['before bed']},{name:'Milk',amt:'1 × 2L',tags:['breakfast']},{name:'Parmesan or cheddar (optional)',amt:'small block',tags:['dinner']},{name:'Whey protein powder',amt:'1 tub if needed',tags:['breakfast','post-training']}]},
+  {name:'Bakery & cereals',icon:'🌾',color:'#FAEEDA',items:[{name:'Rolled oats',amt:'500g bag',tags:['breakfast']},{name:'Granola',amt:'500g bag',tags:['breakfast']},{name:'Rice cakes',amt:'1 pack',tags:['pre-training']}]},
+  {name:'Fresh fruit & veg',icon:'🥦',color:'#EAF3DE',items:[{name:'Red peppers',amt:'2 peppers',tags:['lunch']},{name:'Bananas',amt:'1 bunch (7)',tags:['pre-training','post-training']}]},
+  {name:'Frozen',icon:'🧊',color:'#E6F1FB',items:[{name:'Frozen blueberries',amt:'500g bag',tags:['breakfast']}]},
+  {name:'Tins & jars',icon:'🥫',color:'#F1EFE8',items:[{name:'Tinned chopped tomatoes',amt:'3 × 400g tins (2 chilli, 1 bolognese)',tags:['lunch','dinner']}]},
+  {name:'Rice, pasta & grains',icon:'🍚',color:'#FAEEDA',items:[{name:'White rice',amt:'1kg bag',tags:['lunch']},{name:'Pasta (penne or spaghetti)',amt:'500g bag',tags:['dinner']}]},
+  {name:'Condiments & sweet',icon:'🍯',color:'#FAEEDA',items:[{name:'Honey',amt:'1 squeezy bottle',tags:['breakfast','pre-training']}]},
+  {name:'Supplements',icon:'💊',color:'#EEEDFE',items:[{name:'Creatine monohydrate',amt:'5g daily — buy if needed',tags:['supplement']},{name:'Vitamin D3',amt:'1000–2000 IU daily — buy if needed',tags:['supplement']}]},
+];
+
+const TAG_STYLE={'breakfast':'mt-bf','lunch':'mt-lu','dinner':'mt-di','pre-training':'mt-tr','post-training':'mt-tr','before bed':'mt-bd','supplement':'mt-bd'};
+let dinnerChoice='salmon',checked={};
+
+function selectDinner(opt){
+  dinnerChoice=opt;
+  document.getElementById('dinOpt1').classList.toggle('selected',opt==='salmon');
+  document.getElementById('dinOpt2').classList.toggle('selected',opt==='mince');
+  checked={};renderShopList();
+}
+
+function renderShopList(){
+  const aisles=dinnerChoice==='salmon'?AISLES_SALMON:AISLES_MINCE;
+  let total=0,done=0,html='';
+  aisles.forEach(a=>a.items.forEach(()=>total++));
+  aisles.forEach(a=>{
+    html+=`<div class="shop-aisle"><div class="aisle-hdr" style="background:${a.color}20;border:1px solid ${a.color}60"><span style="font-size:15px;width:26px;text-align:center;flex-shrink:0">${a.icon}</span><span class="aisle-name">${a.name}</span><span class="aisle-count">${a.items.length} item${a.items.length!==1?'s':''}</span></div>`;
+    a.items.forEach(item=>{
+      const isC=!!checked[item.name];if(isC)done++;
+      html+=`<div class="shop-item${isC?' checked':''}" onclick="toggleCheck('${item.name.replace(/'/g,'\\\'')}')" ><div class="shop-check"></div><div class="shop-iinfo"><div class="shop-iname">${item.name}</div><div class="shop-iamt">${item.amt}</div></div><div class="shop-tags">${item.tags.map(t=>`<span class="meal-tag ${TAG_STYLE[t]||'mt-bd'}">${t}</span>`).join('')}</div></div>`;
+    });
+    html+='</div>';
+  });
+  document.getElementById('shopList').innerHTML=html;
+  document.getElementById('progFill').style.width=`${total?Math.round((done/total)*100):0}%`;
+  document.getElementById('progCount').textContent=`${done} / ${total}`;
+}
+
+function toggleCheck(key){checked[key]=!checked[key];renderShopList();}
+function clearChecks(){checked={};renderShopList();}
+
+function showSec(id,btn){
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');btn.classList.add('active');
+  if(id==='shop')renderShopList();
+}
+
+function openRec(id){
+  const r=RECIPES[id];
+  const ings=r.ingredients.map(i=>`<div class="ing-row"><span class="ing-name">${i.name}</span><span class="ing-amt">${i.amt}</span></div>`).join('');
+  const steps=r.steps.map((s,i)=>`<div class="step-card"><div class="step-n">${i+1}</div><div class="step-b"><div class="step-title">${s.t}</div><div class="step-desc">${s.d}</div>${s.tip?`<div class="step-tip"><strong>Beginner note</strong>${s.tip}</div>`:''}</div></div>`).join('');
+  document.getElementById('recContent').innerHTML=`<div class="rec-hdr"><div class="rec-title">${r.title}</div><div class="rec-meta">${r.meta}</div><div class="rec-stats">${r.stats.map(s=>`<span class="rec-stat">${s}</span>`).join('')}</div></div><div class="sec-label">Ingredients</div><div class="ing-list">${ings}</div><div class="sec-label">Method</div><div class="step-list">${steps}</div>`;
+  document.getElementById('foodMain').style.display='none';
+  document.getElementById('foodRec').style.display='block';
+}
+function closeRec(){document.getElementById('foodMain').style.display='block';document.getElementById('foodRec').style.display='none';}
+
+function updateHeader(){
+  const now=new Date(),wk=Math.max(1,Math.min(14,Math.floor((now-START)/(7*864e5))+1));
+  document.getElementById('wkBadge').textContent=`Week ${wk} of 14`;
+  document.getElementById('dateTxt').textContent=`${DAYS[now.getDay()]} ${now.getDate()} ${MONTHS[now.getMonth()]}`;
+  const done=wk-1;
+  document.getElementById('wkBar').style.width=`${Math.round((done/14)*100)}%`;
+  document.getElementById('wkProg').textContent=`${done} / 14`;
+}
+
+renderToday();renderWeek();updateHeader();
+</script>
+</div>
+</body>
+</html>
